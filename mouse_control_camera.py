@@ -1,6 +1,10 @@
 import cv2
-import mediapipe as mp
 import numpy as np
+import mediapipe as mp
+from math import hypot
+from ctypes import cast, POINTER
+import time
+import autopy
 
 wCam, hCam = 640, 480
 
@@ -8,9 +12,126 @@ cap = cv2.VideoCapture(0)
 cap.set(3, wCam)
 cap.set(4, hCam)
 
+pTime = 0
+
+mpHands = mp.solutions.hands  # создание объекта для отслеживания creating an object for tracking
+hands = mpHands.Hands()
+mpDraw = mp.solutions.drawing_utils
+
 while True:
-    success,img = cap.read()
+    # 1 Find hand Landmarks Находим Руки
+    success, img = cap.read()
     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    results = hands.process(imgRGB)
+
+    lmList = []
+    if results.multi_hand_landmarks:
+        for handlandmark in results.multi_hand_landmarks:
+            for id, lm in enumerate(handlandmark.landmark):
+                h, w, _ = img.shape
+                cx, cy = int(lm.x * w), int(lm.y * h)
+                lmList.append([id, cx, cy])
+            mpDraw.draw_landmarks(img, handlandmark, mpHands.HAND_CONNECTIONS)
+
+    if lmList != []:
+        x1, y1 = lmList[4][1], lmList[4][2]
+        x2, y2 = lmList[8][1], lmList[8][2]
+
+        cv2.circle(img, (x1, y1), 4, (255, 0, 0), cv2.FILLED)
+        cv2.circle(img, (x2, y2), 4, (255, 0, 0), cv2.FILLED)
+        cv2.line(img, (x1, y1), (x2, y2), (255, 0, 0), 3)
+
+        length = hypot(x2 - x1, y2 - y1)
+
+    # 2 Get the tip of the index and middle finger Отслеживание кончика указательного и среднего пальца
+
+    # 3 Check which fingers are up Проверяет, какие пальцы подняты
+
+    # 4 Only Index Finger : Moving Mode ТОлько указательный палец: Режим движения
+
+    # 5 Convert Coordinates Преобразование координаты
+
+    # 6 Smoothen Values Сглаживание значений
+
+    # 7 Move Mouse Движение мышью
+
+    # 8 Both Index and middle fingers are up: Clicking Mode Указатльный и средний пальцы подняты: режим клика
+
+    # 9 Find distance between fingers Нахождение дистации между пальцами
+
+    # 10 Click mouse if distance short Клик мышью если расстояние уменьшилось
+
+    # 11 Frame Rate Частота кадров
+    cTime = time.time()
+    fps = 1 / (cTime - pTime)
+    pTime = cTime
+    cv2.putText(img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
+    
+    # 12 Display
+    cv2.imshow("Image", img)
+    if cv2.waitKey(1) & 0xff == ord('q'):
+        break
+
+# import cv2
+# import numpy as np
+# import mediapipe as mp
+# from math import hypot
+# from ctypes import cast, POINTER
+# import time
+# import autopy
+
+# # wCam, hCam = 640, 480
+
+# cap = cv2.VideoCapture(0)
+# # cap.set(3, wCam)
+# # cap.set(4, hCam)
+
+# pTime = 0
+
+# mpHands = mp.solutions.hands  # создание объекта для отслеживания creating an object for tracking
+# hands = mpHands.Hands()
+# mpDraw = mp.solutions.drawing_utils
+
+# while True:
+#     # 1 Find hand Landmarks Находим Руки
+#     success, img = cap.read()
+#     imgRGB = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+#     results = hands.process(imgRGB)
+
+#     if results.multi_hand_landmarks:
+#         for handlandmark in results.multi_hand_landmarks:
+#             for id, lm in enumerate(handlandmark.landmark):
+#                 h, w, _ = img.shape
+#                 cx, cy = int(lm.x*w), int(lm.y*h)
+#             mpDraw.draw_landmarks(img, handlandmark, mpHands.HAND_CONNECTIONS)
+
+#     # 2 Get the tip of the index and middle finger Отслеживание кончика указательного и среднего пальца
+
+#     # 3 Check which fingers are up Проверяет, какие пальцы подняты 
+
+#     # 4 Only Index Finger : Moving Mode ТОлько указательный палец: Режим движения
+
+#     # 5 Convert Coordinates Преобразование координаты
+
+#     # 6 Smoothen Values Сглаживание значений
+
+#     # 7 Move Mouse Движение мышью 
+
+#     # 8 Both Index and middle fingers are up: Clicking Mode Указатльный и средний пальцы подняты: режим клика
+
+#     # 9 Find distance between fingers Нахождение дистации между пальцами
+
+#     # 10 Click mouse if distance short Клик мышью если расстояние уменьшилось
+
+#     # 11 Frame Rate
+#     cTime = time.time()
+#     fps = 1 / (cTime - pTime)
+#     pTime = cTime
+#     cv2.putText(img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
+#     # 12 Display
+#     cv2.imshow("Image", img)
+#     if cv2.waitKey(1) & 0xff == ord('q'):
+#         break
 
 # import cv2
 # import time
@@ -51,29 +172,29 @@ while True:
 
 #             # 3. Check which fingers are up
 #             fingers = detector.fingersUp()
-            
+
 #             #in moving mouse it was easy to move mouse upwards but in downward direction it is tough so we are setting region
 #             cv2.rectangle(img, (frameR, frameR), (wCam - frameR, hCam - frameR),(255, 0, 255), 2)
-                
+
 #             # 4. Only Index Finger : Moving Mode
 #             if fingers[1] == 1 and fingers[2] == 0:
-                    
+
 #                 # 5. Convert Coordinates as our cv window is 640*480 but my screen is full HD so have to convert it accordingly
 #                 x3 = np.interp(x1, (frameR, wCam - frameR), (0, wScr))#converting x coordinates
 #                 y3 = np.interp(y1, (frameR, hCam - frameR), (0, hScr))#converting y
-                    
+
 #                 # 6. Smoothen Values avoid fluctuations
 #                 clocX = plocX + (x3 - plocX) / smoothening
 #                 clocY = plocY + (y3 - plocY) / smoothening
-                    
+
 #                 # 7. Move Mouse
 #                 pyautogui.moveTo(wScr - clocX, clocY)#wscr-clocx for avoiding mirror inversion
 #                 cv2.circle(img, (x1, y1), 15, (255, 0, 255), cv2.FILLED)#circle shows that we are in moving mode
 #                 plocX, plocY = clocX, clocY
-                    
+
 #             # 8. Both Index and middle fingers are up : Clicking Mode but only if both fingers are near to each other
-#             if fingers[1] == 1 and fingers[2] == 1:    
-                    
+#             if fingers[1] == 1 and fingers[2] == 1:
+
 #                 # 9. Find distance between fingers so that we can make sure fingers are together
 #                 length, img, lineInfo = detector.findDistance(8, 12, img)
 #                 #print(length)
@@ -82,20 +203,20 @@ while True:
 #                 if length < 25:
 #                     cv2.circle(img, (lineInfo[4], lineInfo[5]),15, (0, 255, 0), cv2.FILLED)
 #                     pyautogui.click()
-            
+
 #         # 11. Frame Rate
 #         cTime = time.time()
 #         fps = 1 / (cTime - pTime)
 #         pTime = cTime
 #         cv2.putText(img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3,(255, 0, 0), 3)
-        
+
 #         # 12. Display
 #         cv2.imshow("Image", img)
 #         if cv2.waitKey(1)==27:
-#             break          
-#     cv2.destroyAllWindows()    
+#             break
+#     cv2.destroyAllWindows()
 
-# mouse()   
+# mouse()
 
 
 # import cv2
@@ -147,9 +268,8 @@ while True:
 #         cv2.circle(flipped, north, 6, (0, 0, 255), -1)
 #         cv2.circle(flipped, south, 6, (0, 0, 255), -1)
 #         cv2.circle(flipped, (int(centr_x), int(centr_y)), 6, (255, 0, 0), -1)
-    
-#     cv2.imshow("video", flipped)
 
+#     cv2.imshow("video", flipped)
 
 
 #     if cv2.waitKey(1) & 0xFF == ord(" "):
